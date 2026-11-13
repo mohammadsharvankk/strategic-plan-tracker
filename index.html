@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strategic Plan Performance Tracker</title>
+<style>
+.spt {
+  color-scheme: light;
+  --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink2: #52514e; --muted: #898781;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --good: #0ca30c; --warn: #fab219; --crit: #d03b3b;
+  --q100:#cde2fb; --q200:#9ec5f4; --q300:#6da7ec; --q400:#3987e5; --q500:#256abf; --q600:#184f95;
+  --wash: #f0efec;
+}
+@media (prefers-color-scheme: dark) {
+  .spt {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --q100:#104281; --q200:#184f95; --q300:#1c5cab; --q400:#256abf; --q500:#3987e5; --q600:#6da7ec;
+    --wash: #383835;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: #f9f9f7; }
+@media (prefers-color-scheme: dark) { body { background: #0d0d0d; } }
+.spt { background: var(--page); color: var(--ink); font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px; line-height: 1.45; padding: 24px clamp(14px, 3vw, 36px) 40px; max-width: 1280px; margin: 0 auto; }
+.spt h1 { font-size: 24px; margin: 0 0 4px; letter-spacing: -0.2px; }
+.spt h2 { font-size: 15px; margin: 0 0 2px; }
+.spt .sub { color: var(--ink2); margin: 0; }
+.spt .note { color: var(--muted); font-size: 12px; margin: 2px 0 12px; }
+.spt .banner { margin: 14px 0 18px; padding: 10px 14px; border-radius: 10px; background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--ring); color: var(--ink2); font-size: 13px; }
+.spt .controls { display: flex; flex-wrap: wrap; gap: 14px 22px; align-items: center; margin-bottom: 18px; }
+.spt .seg { display: inline-flex; background: var(--surface); border-radius: 9px; box-shadow: inset 0 0 0 1px var(--ring); padding: 3px; flex-wrap: wrap; }
+.spt .seg button { border: 0; background: none; color: var(--ink2); font: inherit; font-size: 13px; padding: 6px 11px; border-radius: 7px; cursor: pointer; }
+.spt .seg button:hover { background: var(--wash); }
+.spt .seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); font-weight: 600; }
+.spt .lbl { font-size: 12px; color: var(--muted); margin-right: 8px; text-transform: uppercase; letter-spacing: .6px; }
+.spt .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.spt .tile, .spt .card { background: var(--surface); border-radius: 12px; box-shadow: inset 0 0 0 1px var(--ring); padding: 14px 16px; }
+.spt .tile .k { font-size: 12px; color: var(--ink2); }
+.spt .tile .v { font-size: 30px; font-weight: 650; margin-top: 2px; }
+.spt .tile .d { font-size: 12px; color: var(--muted); }
+.spt .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 16px; margin-bottom: 16px; }
+.spt .card { min-width: 0; }
+.spt svg { display: block; width: 100%; overflow: visible; }
+.spt svg text { fill: var(--ink2); font-size: 12px; font-family: inherit; }
+.spt .tblwrap { overflow-x: auto; }
+.spt table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.spt th { text-align: left; font-weight: 600; color: var(--ink2); font-size: 12px; padding: 8px 8px; border-bottom: 1px solid var(--axis); white-space: nowrap; }
+.spt td { padding: 8px 8px; border-bottom: 1px solid var(--grid); vertical-align: middle; }
+.spt td.n, .spt th.n { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+.spt tbody tr { cursor: pointer; }
+.spt #kpiTable td:first-child { min-width: 210px; }
+.spt tbody tr:hover { background: var(--wash); }
+.spt tbody tr.sel { background: var(--wash); box-shadow: inset 3px 0 0 var(--s1); }
+.spt .st { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 12px; }
+.spt .st i { width: 16px; height: 16px; border-radius: 50%; display: inline-grid; place-items: center; font-style: normal; font-size: 11px; font-weight: 700; color: #fff; }
+.spt .st.good i { background: var(--good); } .spt .st.warn i { background: var(--warn); color: #0b0b0b; } .spt .st.crit i { background: var(--crit); }
+.spt .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink2); margin: 4px 0 8px; }
+.spt .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.spt .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.spt .sw.tick { width: 3px; height: 14px; border-radius: 1px; background: var(--ink); }
+.spt .actions { margin: 0; padding-left: 18px; }
+.spt .actions li { margin-bottom: 8px; }
+.spt .actions b { font-weight: 600; }
+.spt .tip { position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--surface); font-size: 12px;
+  padding: 7px 10px; border-radius: 8px; max-width: 280px; opacity: 0; transition: opacity .08s; line-height: 1.4; }
+.spt .tip b { font-weight: 650; }
+.spt .method { color: var(--ink2); font-size: 13px; }
+.spt .method p { margin: 4px 0; }
+.spt footer { margin-top: 22px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="spt" id="app">
+  <h1>Strategic Plan Performance Tracker</h1>
+  <p class="sub">Strategic plan 2026: KPI scorecard, initiative follow-up, risk register and year-end scenarios for a cultural authority</p>
+  <div class="banner" id="disclaimer"><b>Portfolio demo.</b> All figures are illustrative sample data for a fictional cultural authority. They are not real figures from any government entity. Built to show how a strategic-plan database can feed KPI reporting, corrective actions and scenario planning.</div>
+
+  <div class="controls">
+    <div><span class="lbl">Pillar</span><div class="seg" id="pillarSeg"></div></div>
+    <div><span class="lbl">Year-end scenario</span><div class="seg" id="scenSeg"></div></div>
+  </div>
+
+  <div class="tiles" id="tiles"></div>
+
+  <div class="grid2">
+    <section class="card" id="pillarCard">
+      <h2>Projected year-end achievement by pillar</h2>
+      <p class="note">Average of each pillar's KPIs, projected to Q4 under the selected scenario. 100% = target met.</p>
+      <svg id="pillarChart" role="img" aria-label="Projected achievement by pillar"></svg>
+    </section>
+    <section class="card" id="trendCard">
+      <h2 id="trendTitle">KPI trend</h2>
+      <p class="note" id="trendNote">Select a KPI in the scorecard below.</p>
+      <svg id="trendChart" role="img" aria-label="KPI trend"></svg>
+    </section>
+  </div>
+
+  <section class="card" id="scorecard" style="margin-bottom:16px">
+    <h2>KPI scorecard</h2>
+    <p class="note">Status uses the projected Q4 value. Click a row to see its trend. Benchmarks are illustrative peer best-practice values.</p>
+    <div class="tblwrap"><table id="kpiTable">
+      <thead><tr><th>KPI</th><th>Pillar</th><th class="n">Baseline 2025</th><th class="n">Q3 2026</th><th class="n">Target 2026</th><th class="n">Projected Q4</th><th class="n">Achievement</th><th class="n">Peer benchmark</th><th>Status</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+  </section>
+
+  <div class="grid2">
+    <section class="card" id="initCard">
+      <h2>Strategic initiatives: progress against plan</h2>
+      <p class="note">Bar = actual completion at end of Q3. Tick = where the plan says it should be.</p>
+      <div class="legend"><span><i class="sw" style="background:var(--s1)"></i>Actual completion</span><span><i class="sw tick"></i>Planned by now</span></div>
+      <svg id="initChart" role="img" aria-label="Initiative progress"></svg>
+    </section>
+    <section class="card" id="riskCard">
+      <h2>Risk register heatmap</h2>
+      <p class="note">Each cell counts open risks by likelihood and impact. Darker = higher risk score (likelihood × impact).</p>
+      <svg id="riskChart" role="img" aria-label="Risk heatmap"></svg>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="card" id="actionsCard">
+      <h2>Corrective actions</h2>
+      <p class="note">Generated for every KPI projected off track and every initiative more than 15 points behind plan.</p>
+      <ul class="actions" id="actions"></ul>
+    </section>
+    <section class="card" id="riskList">
+      <h2>Top risks and alternative scenarios</h2>
+      <p class="note">Open risks ranked by score, with the linked initiative and fallback plan.</p>
+      <div class="tblwrap"><table id="riskTable">
+        <thead><tr><th>Risk</th><th class="n">Score</th><th>Linked initiative</th><th>Fallback plan</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </section>
+  </div>
+
+  <section class="card method" id="method">
+    <h2>Method</h2>
+    <p><b>Achievement</b> = projected Q4 ÷ target (for KPIs where higher is better), or target ÷ projected Q4 (where lower is better), capped at 120%.</p>
+    <p><b>Projection</b> = Q3 value + the average quarterly change from Q1 to Q3, scaled by scenario: pessimistic × 0.4, base × 1.0, optimistic × 1.5.</p>
+    <p><b>Status</b>: on track ≥ 98%, at risk 90–98%, off track &lt; 90%. Initiatives are delayed when 5–15 points behind plan and critical when more than 15 points behind.</p>
+  </section>
+
+  <footer>Built by Mohammad Sharvan Kamil Karaya · Portfolio project · Illustrative data only</footer>
+  <div class="tip" id="tip" role="tooltip"></div>
+</div>
+
+<script>
+(function () {
+  const PILLARS = ["Cultural Participation", "Creative Economy", "Heritage Preservation", "Institutional Excellence"];
+  const KPIS = [
+    {id:"k1", p:0, name:"Visitors to museums and heritage sites (annualised, millions)", u:"m", dp:2, base:2.40, tgt:3.00, q:[2.55,2.70,2.78], bench:3.10, dir:1, fix:"Launch a Q4 weekend and school-holiday programme across the three busiest sites and add joint ticketing with tourism partners."},
+    {id:"k2", p:0, name:"Residents attending at least one cultural event (%)", u:"%", dp:0, base:41, tgt:50, q:[43,46,49], bench:55, dir:1, fix:null},
+    {id:"k3", p:0, name:"Community programme participants (annualised, thousands)", u:"k", dp:0, base:85, tgt:110, q:[88,92,94], bench:120, dir:1, fix:"Move two community programmes into neighbourhood libraries and partner with schools to lift sign-ups in Q4."},
+    {id:"k4", p:1, name:"Creative business licences issued (annualised)", u:"", dp:0, base:3200, tgt:4000, q:[3350,3600,3820], bench:4200, dir:1, fix:null},
+    {id:"k5", p:1, name:"Creative-sector employment growth (%)", u:"%", dp:1, base:4.0, tgt:6.0, q:[4.3,4.6,4.5], bench:6.5, dir:1, fix:"Re-baseline the target with the economy department and fast-track the creative freelancer permit initiative."},
+    {id:"k6", p:1, name:"Artist grants paid on time (%)", u:"%", dp:0, base:78, tgt:95, q:[82,86,91], bench:97, dir:1, fix:null},
+    {id:"k7", p:2, name:"Heritage sites with an approved conservation plan (%)", u:"%", dp:0, base:60, tgt:80, q:[64,69,75], bench:85, dir:1, fix:null},
+    {id:"k8", p:2, name:"Collection items digitised (cumulative, thousands)", u:"k", dp:0, base:120, tgt:200, q:[138,152,163], bench:210, dir:1, fix:"Add a second digitisation shift and outsource the photographic archive batch to stay within the year."},
+    {id:"k9", p:2, name:"Heritage visitor satisfaction (%)", u:"%", dp:0, base:82, tgt:88, q:[83,85,87], bench:90, dir:1, fix:null},
+    {id:"k10",p:3, name:"Average permit processing time (days)", u:" days", dp:1, base:9, tgt:5, q:[8,7,6], bench:4, dir:-1, fix:null},
+    {id:"k11",p:3, name:"Customer happiness index (%)", u:"%", dp:0, base:84, tgt:90, q:[85,87,89], bench:92, dir:1, fix:null},
+    {id:"k12",p:3, name:"Employee engagement (%)", u:"%", dp:0, base:74, tgt:80, q:[75,74,73], bench:82, dir:1, fix:"Run pulse surveys by department, publish the results, and assign each director one engagement action with a Q1 2027 review."}
+  ];
+  const INITS = [
+    {name:"Museum night programme", p:0, owner:"Museums", budget:4.2, plan:75, act:72},
+    {name:"Neighbourhood arts hubs", p:0, owner:"Community Arts", budget:6.5, plan:70, act:52},
+    {name:"Creative freelancer permit", p:1, owner:"Licensing", budget:2.1, plan:80, act:61},
+    {name:"Artist grants portal", p:1, owner:"Arts Funding", budget:1.8, plan:90, act:88},
+    {name:"Creative district incentives", p:1, owner:"Creative Economy", budget:9.0, plan:60, act:55},
+    {name:"Historic district conservation", p:2, owner:"Heritage", budget:12.4, plan:65, act:58},
+    {name:"Collection digitisation", p:2, owner:"Archives", budget:3.6, plan:75, act:54},
+    {name:"Heritage site wayfinding", p:2, owner:"Heritage", budget:1.2, plan:100, act:100},
+    {name:"One-stop permit platform", p:3, owner:"Digital Services", budget:5.5, plan:85, act:82},
+    {name:"Performance data warehouse", p:3, owner:"Strategy & Performance", budget:2.4, plan:70, act:66}
+  ];
+  const RISKS = [
+    {name:"Visitor demand falls with fewer tourists in summer", L:4, I:4, init:"Museum night programme", alt:"Shift budget to resident-focused events and school partnerships"},
+    {name:"Conservation contractor delays", L:3, I:5, init:"Historic district conservation", alt:"Split the work package and pre-qualify a second contractor"},
+    {name:"Digitisation vendor capacity", L:4, I:3, init:"Collection digitisation", alt:"Prioritise high-demand collections and extend to Q1 2027"},
+    {name:"Freelancer permit needs a legal amendment", L:3, I:4, init:"Creative freelancer permit", alt:"Launch a pilot under existing licence categories"},
+    {name:"Data quality gaps in KPI reporting", L:3, I:3, init:"Performance data warehouse", alt:"Add validation rules and named data owners for each KPI"},
+    {name:"Venue availability for arts hubs", L:2, I:4, init:"Neighbourhood arts hubs", alt:"Use library and community-centre spaces"},
+    {name:"Cyber incident on permit platform", L:2, I:5, init:"One-stop permit platform", alt:"Manual fallback process and incident playbook"},
+    {name:"Staff turnover in key teams", L:3, I:2, init:"Performance data warehouse", alt:"Cross-train two backups for each critical role"}
+  ];
+  const SCEN = [{id:"pess", label:"Pessimistic", f:0.4}, {id:"base", label:"Base", f:1.0}, {id:"opt", label:"Optimistic", f:1.5}];
+
+  const state = { pillar: -1, scen: "base", kpi: "k1" };
+  const $ = (id) => document.getElementById(id);
+  const css = (v) => getComputedStyle($("app")).getPropertyValue(v).trim();
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs, parent, text) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; if (parent) parent.appendChild(e); return e; };
+  const fmt = (v, k) => (k.u === "" ? Math.round(v).toLocaleString("en") : v.toFixed(k.dp)) + (k.u === "%" ? "%" : k.u === "m" ? "m" : k.u === "k" ? "k" : k.u);
+
+  // tooltip
+  const tip = $("tip");
+  function showTip(evt, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(evt); }
+  function moveTip(evt) { const w = tip.offsetWidth, h = tip.offsetHeight; let x = evt.clientX + 14, y = evt.clientY + 14;
+    if (x + w > innerWidth - 8) x = evt.clientX - w - 14; if (y + h > innerHeight - 8) y = evt.clientY - h - 14; tip.style.left = x + "px"; tip.style.top = y + "px"; }
+  function hideTip() { tip.style.opacity = 0; }
+  function hover(node, html) { node.addEventListener("mousemove", (e) => showTip(e, typeof html === "function" ? html() : html)); node.addEventListener("mouseleave", hideTip);
+    node.addEventListener("touchstart", (e) => { const t = e.touches[0]; showTip(t, typeof html === "function" ? html() : html); }, {passive:true}); }
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+  // calculations
+  const factor = () => SCEN.find((s) => s.id === state.scen).f;
+  function project(k, f) { const slope = (k.q[2] - k.q[0]) / 2; return k.q[2] + slope * f; }
+  function achieve(k, v) { const a = k.dir === 1 ? v / k.tgt : k.tgt / v; return Math.min(a, 1.2); }
+  function status(a) { return a >= 0.98 ? "good" : a >= 0.90 ? "warn" : "crit"; }
+  const ST = { good: ["✓", "On track"], warn: ["!", "At risk"], crit: ["✕", "Off track"] };
+  const stHtml = (s) => `<span class="st ${s}"><i aria-hidden="true">${ST[s][0]}</i>${ST[s][1]}</span>`;
+  function initStatus(i) { const gap = i.act - i.plan; return gap >= -5 ? "good" : gap >= -15 ? "warn" : "crit"; }
+  const IST = { good: "On schedule", warn: "Delayed", crit: "Critical" };
+  const inPillar = (x) => state.pillar < 0 || x.p === state.pillar;
+
+  // controls
+  function buildSeg(host, items, key, onPick) {
+    host.innerHTML = "";
+    items.forEach((it) => { const b = document.createElement("button"); b.type = "button"; b.textContent = it.label; b.setAttribute("aria-pressed", state[key] === it.value);
+      b.onclick = () => { state[key] = it.value; onPick && onPick(); render(); }; host.appendChild(b); });
+  }
+
+  function render() {
+    buildSeg($("pillarSeg"), [{label:"All pillars", value:-1}].concat(PILLARS.map((p, i) => ({label:p, value:i}))), "pillar", () => {
+      const vis = KPIS.filter(inPillar); if (!vis.find((k) => k.id === state.kpi)) state.kpi = vis[0].id; });
+    buildSeg($("scenSeg"), SCEN.map((s) => ({label:s.label, value:s.id})), "scen");
+    const f = factor();
+    const kp = KPIS.filter(inPillar).map((k) => { const pr = project(k, f), a = achieve(k, pr); return Object.assign({}, k, {proj: pr, ach: a, st: status(a)}); });
+    const inits = INITS.filter(inPillar);
+    const risks = RISKS.filter((r) => { const i = INITS.find((x) => x.name === r.init); return inPillar(i); });
+
+    // tiles
+    const avg = kp.reduce((s, k) => s + k.ach, 0) / kp.length;
+    const cnt = (s) => kp.filter((k) => k.st === s).length;
+    const onSched = inits.filter((i) => initStatus(i) === "good").length;
+    const budget = inits.reduce((s, i) => s + i.budget, 0);
+    const high = risks.filter((r) => r.L * r.I >= 12).length;
+    $("tiles").innerHTML = [
+      ["Projected plan achievement", Math.round(avg * 100) + "%", "Average across " + kp.length + " KPIs"],
+      ["KPIs on track", cnt("good") + " / " + kp.length, cnt("warn") + " at risk · " + cnt("crit") + " off track"],
+      ["Initiatives on schedule", onSched + " / " + inits.length, "AED " + budget.toFixed(1) + "m budget in scope"],
+      ["High-score risks open", String(high), "Score ≥ 12 of " + risks.length + " open risks"]
+    ].map(([k, v, d]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join("");
+
+    drawPillars(f);
+    drawTable(kp);
+    drawTrend(KPIS.find((k) => k.id === state.kpi), f);
+    drawInits(inits);
+    drawRisk(risks);
+    drawActions(kp, inits);
+    drawRiskTable(risks);
+  }
+
+  function drawPillars(f) {
+    const svg = $("pillarChart"); svg.innerHTML = "";
+    const W = svg.clientWidth || 460, rowH = 40, top = 6, labW = Math.min(170, W * 0.38), right = 52;
+    const rows = PILLARS.map((p, i) => { const ks = KPIS.filter((k) => k.p === i); const a = ks.reduce((s, k) => s + achieve(k, project(k, f)), 0) / ks.length; return {p, i, a}; });
+    const H = top + rows.length * rowH + 22; svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.style.height = H + "px";
+    const x0 = labW, x1 = W - right, max = 1.2, sx = (v) => x0 + (v / max) * (x1 - x0);
+    [0, 0.5, 1].forEach((t) => { el("line", {x1:sx(t), x2:sx(t), y1:top, y2:H - 20, stroke: t === 1 ? css("--axis") : css("--grid"), "stroke-dasharray": t === 1 ? "4 3" : null}, svg);
+      el("text", {x:sx(t), y:H - 4, "text-anchor":"middle", fill: css("--muted")}, svg, Math.round(t * 100) + "%"); });
+    rows.forEach((r, j) => {
+      const y = top + j * rowH + 10, faded = state.pillar >= 0 && state.pillar !== r.i;
+      el("text", {x:0, y:y + 13, fill: css("--ink2")}, svg, r.p);
+      const w = Math.max(4, sx(r.a) - x0);
+      const bar = el("path", {d: `M${x0},${y} h${w - 4} a4,4 0 0 1 4,4 v12 a4,4 0 0 1 -4,4 h${-(w - 4)} z`, fill: css("--s1"), opacity: faded ? 0.3 : 1}, svg);
+      el("text", {x: sx(r.a) + 6, y: y + 14, fill: css("--ink")}, svg, Math.round(r.a * 100) + "%");
+      const hit = el("rect", {x:0, y:y - 8, width:W, height:rowH - 4, fill:"transparent"}, svg);
+      hover(hit, `<b>${esc(r.p)}</b><br>Projected achievement: ${Math.round(r.a * 100)}%<br>${KPIS.filter((k) => k.p === r.i).length} KPIs`);
+    });
+  }
+
+  function drawTable(kp) {
+    const tb = $("kpiTable").querySelector("tbody"); tb.innerHTML = "";
+    kp.forEach((k) => {
+      const tr = document.createElement("tr"); if (k.id === state.kpi) tr.className = "sel";
+      tr.innerHTML = `<td>${esc(k.name)}</td><td>${esc(PILLARS[k.p])}</td><td class="n">${fmt(k.base, k)}</td><td class="n">${fmt(k.q[2], k)}</td><td class="n">${fmt(k.tgt, k)}</td><td class="n">${fmt(k.proj, k)}</td><td class="n">${Math.round(k.ach * 100)}%</td><td class="n">${fmt(k.bench, k)}</td><td>${stHtml(k.st)}</td>`;
+      tr.onclick = () => { state.kpi = k.id; render(); document.getElementById("trendCard").scrollIntoView({behavior:"smooth", block:"nearest"}); };
+      tb.appendChild(tr);
+    });
+  }
+
+  function drawTrend(k, f) {
+    const svg = $("trendChart"); svg.innerHTML = "";
+    $("trendTitle").textContent = k.name;
+    const pr = project(k, f), a = achieve(k, pr), st = status(a);
+    $("trendNote").innerHTML = `Baseline, Q1–Q3 actuals and projected Q4 (${SCEN.find((s) => s.id === state.scen).label.toLowerCase()} scenario). ${stHtml(st)}`;
+    const W = svg.clientWidth || 460, H = 230, L = 52, R = 70, T = 14, B = 28;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.style.height = H + "px";
+    const xs = ["2025", "Q1", "Q2", "Q3", "Q4 (proj.)"], vals = [k.base].concat(k.q, [pr]);
+    const all = vals.concat([k.tgt, k.bench]); let lo = Math.min(...all), hi = Math.max(...all); const pad = (hi - lo) * 0.15 || 1; lo -= pad; hi += pad;
+    const sx = (i) => L + i * (W - L - R) / (xs.length - 1), sy = (v) => T + (hi - v) / (hi - lo) * (H - T - B);
+    for (let t = 0; t <= 4; t++) { const v = lo + (hi - lo) * t / 4; el("line", {x1:L, x2:W - R, y1:sy(v), y2:sy(v), stroke: css("--grid")}, svg);
+      el("text", {x:L - 6, y:sy(v) + 4, "text-anchor":"end", fill: css("--muted")}, svg, fmt(v, k)); }
+    xs.forEach((x, i) => el("text", {x:sx(i), y:H - 8, "text-anchor":"middle", fill: css("--muted")}, svg, x));
+    // target and benchmark reference lines
+    [[k.tgt, "Target", css("--ink2"), "5 4"], [k.bench, "Benchmark", css("--muted"), "2 3"]].forEach(([v, lab, c, d]) => {
+      el("line", {x1:L, x2:W - R, y1:sy(v), y2:sy(v), stroke:c, "stroke-dasharray":d, "stroke-width":1.5}, svg);
+      el("text", {x:W - R + 6, y:sy(v) + 4, fill:c}, svg, lab); });
+    const pts = vals.map((v, i) => [sx(i), sy(v)]);
+    el("path", {d: "M" + pts.slice(0, 4).map((p) => p.join(",")).join("L"), fill:"none", stroke: css("--s1"), "stroke-width":2, "stroke-linejoin":"round"}, svg);
+    el("path", {d: `M${pts[3].join(",")}L${pts[4].join(",")}`, fill:"none", stroke: css("--s1"), "stroke-width":2, "stroke-dasharray":"5 4"}, svg);
+    pts.forEach((p, i) => {
+      el("circle", {cx:p[0], cy:p[1], r:4.5, fill: i === 4 ? css("--surface") : css("--s1"), stroke: i === 4 ? css("--s1") : css("--surface"), "stroke-width":2}, svg);
+      const hit = el("circle", {cx:p[0], cy:p[1], r:14, fill:"transparent"}, svg);
+      hover(hit, `<b>${xs[i]}</b>: ${fmt(vals[i], k)}<br>Target ${fmt(k.tgt, k)} · Benchmark ${fmt(k.bench, k)}`);
+    });
+    el("text", {x:pts[4][0] - 9, y:pts[4][1] + (pr >= k.tgt ? 18 : -10), "text-anchor":"end", fill: css("--ink"), "font-weight":600}, svg, fmt(pr, k));
+  }
+
+  function drawInits(inits) {
+    const svg = $("initChart"); svg.innerHTML = "";
+    const W = svg.clientWidth || 460, rowH = 30, labW = Math.min(200, W * 0.42), right = 40;
+    const H = inits.length * rowH + 22; svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.style.height = H + "px";
+    const x0 = labW, x1 = W - right, sx = (v) => x0 + v / 100 * (x1 - x0);
+    [0, 50, 100].forEach((t) => { el("line", {x1:sx(t), x2:sx(t), y1:0, y2:H - 20, stroke: css("--grid")}, svg); el("text", {x:sx(t), y:H - 4, "text-anchor":"middle", fill: css("--muted")}, svg, t + "%"); });
+    inits.forEach((it, j) => {
+      const y = j * rowH + 6, s = initStatus(it);
+      el("text", {x:0, y:y + 12, fill: css("--ink2")}, svg, it.name.length > 30 && W < 520 ? it.name.slice(0, 28) + "…" : it.name);
+      const w = Math.max(4, sx(it.act) - x0);
+      el("path", {d: `M${x0},${y} h${w - 4} a4,4 0 0 1 4,4 v8 a4,4 0 0 1 -4,4 h${-(w - 4)} z`, fill: css("--s1")}, svg);
+      el("rect", {x: sx(it.plan) - 1.5, y: y - 4, width: 3, height: 24, rx: 1, fill: css("--ink")}, svg);
+      if (s !== "good") el("text", {x: Math.max(sx(it.plan), sx(it.act)) + 7, y: y + 12, fill: s === "crit" ? css("--crit") : css("--ink2"), "font-weight": 600}, svg, (it.act - it.plan) + " pts");
+      const hit = el("rect", {x:0, y:y - 6, width:W, height:rowH, fill:"transparent"}, svg);
+      hover(hit, `<b>${esc(it.name)}</b><br>Owner: ${esc(it.owner)} · Budget AED ${it.budget}m<br>Actual ${it.act}% vs planned ${it.plan}% (${it.act - it.plan >= 0 ? "+" : ""}${it.act - it.plan} pts)<br>${IST[s]}`);
+    });
+  }
+
+  function drawRisk(risks) {
+    const svg = $("riskChart"); svg.innerHTML = "";
+    const W = svg.clientWidth || 460, L = 70, B = 40, T = 6, size = Math.min((W - L - 10) / 5, 52), H = T + size * 5 + B;
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.style.height = H + "px";
+    const ramp = ["--q100", "--q200", "--q300", "--q400", "--q500", "--q600"].map(css);
+    for (let L5 = 1; L5 <= 5; L5++) for (let I5 = 1; I5 <= 5; I5++) {
+      const x = L + (I5 - 1) * size, y = T + (5 - L5) * size, score = L5 * I5;
+      const here = risks.filter((r) => r.L === L5 && r.I === I5);
+      const idx = Math.min(5, Math.floor((score - 1) / 25 * 6));
+      el("rect", {x:x + 1, y:y + 1, width:size - 2, height:size - 2, rx:4, fill: ramp[idx]}, svg);
+      if (here.length) {
+        const dark = idx >= 3;
+        el("text", {x:x + size / 2, y:y + size / 2 + 5, "text-anchor":"middle", "font-size":15, "font-weight":700, fill: dark ? "#ffffff" : "#0b0b0b"}, svg, here.length);
+      }
+      const hit = el("rect", {x, y, width:size, height:size, fill:"transparent"}, svg);
+      hover(hit, `<b>Likelihood ${L5} × Impact ${I5} = ${score}</b><br>` + (here.length ? here.map((r) => "• " + esc(r.name)).join("<br>") : "No open risks"));
+    }
+    for (let i = 1; i <= 5; i++) { el("text", {x:L + (i - 0.5) * size, y:T + 5 * size + 16, "text-anchor":"middle", fill: css("--muted")}, svg, i);
+      el("text", {x:L - 10, y:T + (5 - i + 0.5) * size + 4, "text-anchor":"end", fill: css("--muted")}, svg, i); }
+    el("text", {x:L + 2.5 * size, y:H - 4, "text-anchor":"middle", fill: css("--ink2")}, svg, "Impact →");
+    el("text", {x:12, y:T + 2.5 * size, "text-anchor":"middle", fill: css("--ink2"), transform:`rotate(-90 12 ${T + 2.5 * size})`}, svg, "Likelihood →");
+  }
+
+  function drawActions(kp, inits) {
+    const items = [];
+    kp.filter((k) => k.st === "crit").forEach((k) => items.push(`<li><b>${esc(k.name)}</b> is projected at ${Math.round(k.ach * 100)}% of target. ${esc(k.fix || "Review the KPI owner's plan and agree a recovery action at the next performance meeting.")}</li>`));
+    inits.filter((i) => initStatus(i) === "crit").forEach((i) => items.push(`<li><b>${esc(i.name)}</b> is ${i.plan - i.act} points behind plan. Escalate to the ${esc(i.owner)} director, re-plan milestones, and report weekly until the gap is under 5 points.</li>`));
+    $("actions").innerHTML = items.length ? items.join("") : "<li>No KPIs off track and no critical initiatives under this scenario.</li>";
+  }
+
+  function drawRiskTable(risks) {
+    const tb = $("riskTable").querySelector("tbody"); tb.innerHTML = "";
+    risks.slice().sort((a, b) => b.L * b.I - a.L * a.I).slice(0, 5).forEach((r) => {
+      const tr = document.createElement("tr"); tr.style.cursor = "default";
+      tr.innerHTML = `<td>${esc(r.name)}</td><td class="n">${r.L * r.I}</td><td>${esc(r.init)}</td><td>${esc(r.alt)}</td>`; tb.appendChild(tr); });
+  }
+
+  render();
+  let t; addEventListener("resize", () => { clearTimeout(t); t = setTimeout(render, 120); });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+})();
+</script>
+</body>
+</html>
